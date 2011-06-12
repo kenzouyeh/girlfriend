@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+
+$:.unshift File.join(File.dirname(__FILE__), *%w[.. lib])
+
+require 'girlfriend'
+require 'optparse'
+
+# Register User Defined Abilities
+Dir[File.join(File.expand_path('~/.girlfriend'),'*.rb')].each do |ability|
+	require "#{ability}"
+end
+
+help = <<HELP
+Girlfriend is an installable, upgradable and removable girlfriend.
+
+usage: girlfriend [options]
+
+Current abilities:
+	interactive	- try talking to her in interactive mode
+	talk 		- try talking to her
+	finger 		- try fingering her
+	
+Examples:
+	girlfriend --ability talk --input 'Hey, Ruby :)'
+	
+Options:
+HELP
+
+if ARGV.size < 1
+	puts 'Invalid options. Run `girlfriend --help` for assistance.'
+	exit 1
+end
+
+options = {}
+opts = OptionParser.new do |opts|
+	opts.banner = help
+	
+	opts.on('--ability [ability]', 'specify ability to use') do |ability|
+		options['ability'] = ability
+	end
+	
+	opts.on('--input [input]', 'specify input text') do |input|
+		options['input'] = input
+	end
+	
+	opts.on('--abilities', 'list all abilities') do
+		puts Girlfriend.abilities.map { |name, ability| [name] }.join(", ")
+		exit 0
+	end
+
+	opts.on('--version', 'show version information') do
+		puts Girlfriend::VERSION
+		exit 0
+	end
+end
+
+begin
+	opts.parse!
+rescue OptionParser::InvalidOption => e
+	puts e.message
+	exit 1
+end
+
+if options['ability'].nil?
+	puts 'Invalid options. Run `girlfriend --help` for assistance.'
+	exit 1
+end
+
+puts Girlfriend.interact?(options['ability'].to_sym, options['input'].to_s)
